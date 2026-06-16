@@ -212,23 +212,18 @@ def render_bars(actual_data, target_data, date_label=""):
     under_card_color = '#10b981' if under_count == 0 else '#ef4444'
 
     summary_html = f"""
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;">
-      <div style="background:#0f172a;border-radius:16px;padding:20px 20px 18px;">
-        <div style="font-size:11px;font-weight:600;letter-spacing:.06em;color:#64748b;text-transform:uppercase;margin-bottom:10px;">전체 달성률</div>
-        <div style="font-size:30px;font-weight:700;color:{pct_card_color};letter-spacing:-.5px;">{total_pct:.1f}%</div>
-      </div>
-      <div style="background:#0f172a;border-radius:16px;padding:20px 20px 18px;">
-        <div style="font-size:11px;font-weight:600;letter-spacing:.06em;color:#64748b;text-transform:uppercase;margin-bottom:10px;">실적 합계</div>
-        <div style="font-size:30px;font-weight:700;color:#f1f5f9;letter-spacing:-.5px;">{fmt_vnd(total_actual)}</div>
-      </div>
-      <div style="background:#0f172a;border-radius:16px;padding:20px 20px 18px;">
-        <div style="font-size:11px;font-weight:600;letter-spacing:.06em;color:#64748b;text-transform:uppercase;margin-bottom:10px;">목표 합계</div>
-        <div style="font-size:30px;font-weight:700;color:#f1f5f9;letter-spacing:-.5px;">{fmt_vnd(total_target)}</div>
-      </div>
-      <div style="background:#0f172a;border-radius:16px;padding:20px 20px 18px;">
-        <div style="font-size:11px;font-weight:600;letter-spacing:.06em;color:#64748b;text-transform:uppercase;margin-bottom:10px;">미달 카테고리</div>
-        <div style="font-size:30px;font-weight:700;color:{under_card_color};letter-spacing:-.5px;">{under_count}개</div>
-      </div>
+    <style>
+      .summary-grid {{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:24px; }}
+      @media(max-width:600px) {{ .summary-grid {{ grid-template-columns:repeat(2,1fr); }} }}
+      .s-card {{ background:#0f172a; border-radius:16px; padding:18px 16px; }}
+      .s-label {{ font-size:11px; font-weight:600; letter-spacing:.06em; color:#64748b; text-transform:uppercase; margin-bottom:8px; }}
+      .s-value {{ font-size:26px; font-weight:700; letter-spacing:-.5px; }}
+    </style>
+    <div class="summary-grid">
+      <div class="s-card"><div class="s-label">전체 달성률</div><div class="s-value" style="color:{pct_card_color};">{total_pct:.1f}%</div></div>
+      <div class="s-card"><div class="s-label">실적 합계</div><div class="s-value" style="color:#f1f5f9;">{fmt_vnd(total_actual)}</div></div>
+      <div class="s-card"><div class="s-label">목표 합계</div><div class="s-value" style="color:#f1f5f9;">{fmt_vnd(total_target)}</div></div>
+      <div class="s-card"><div class="s-label">미달 카테고리</div><div class="s-value" style="color:{under_card_color};">{under_count}개</div></div>
     </div>
     """
 
