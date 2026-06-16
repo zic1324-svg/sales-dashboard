@@ -306,15 +306,18 @@ st.markdown("""
 
 # ── 비밀번호 잠금 ─────────────────────────────────────────────────────────────
 def check_password():
-    if st.session_state.get('authenticated'):
+    if st.session_state.get('role'):
         return True
     st.markdown("<h2 style='text-align:center;margin-top:80px;'>🔐 매출 대시보드</h2>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         pwd = st.text_input("비밀번호", type="password", placeholder="비밀번호를 입력하세요")
         if st.button("확인", use_container_width=True, type="primary"):
-            if pwd == st.secrets.get("APP_PASSWORD", ""):
-                st.session_state['authenticated'] = True
+            if pwd == st.secrets.get("ADMIN_PASSWORD", ""):
+                st.session_state['role'] = 'admin'
+                st.rerun()
+            elif pwd == st.secrets.get("APP_PASSWORD", ""):
+                st.session_state['role'] = 'viewer'
                 st.rerun()
             else:
                 st.error("비밀번호가 틀렸습니다.")
@@ -323,13 +326,16 @@ def check_password():
 if not check_password():
     st.stop()
 
+is_admin = st.session_state.get('role') == 'admin'
+
 st.title("📊 2026년 온라인 매출 달성 현황")
 
 # ── 사이드바 ──────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown("## 📂 데이터 업로드")
-    st.markdown("---")
-    uploaded = st.file_uploader("SKU 매출 엑셀 파일 (.xlsx)", type=['xlsx'], label_visibility='collapsed')
+    if is_admin:
+        st.markdown("## 📂 데이터 업로드")
+        st.markdown("---")
+    uploaded = st.file_uploader("SKU 매출 엑셀 파일 (.xlsx)", type=['xlsx'], label_visibility='collapsed') if is_admin else None
 
     if uploaded:
         file_bytes = uploaded.read()
