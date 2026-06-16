@@ -389,14 +389,14 @@ if view_month and view_month in history:
     rec = history[view_month]
     st.subheader(f"📈 {view_month}월 달성 현황")
     html = render_bars(rec['actual'], rec['target'], rec.get('date_label', ''))
-    components.html(html, height=720, scrolling=False)
+    components.html(html, height=1000, scrolling=False)
 
 elif result:
     month = result['month']
     target = ANNUAL_TARGETS[month]
     st.subheader(f"📈 {month}월 달성 현황")
     html = render_bars(result['actual'], target, result['date_label'])
-    components.html(html, height=720, scrolling=False)
+    components.html(html, height=1000, scrolling=False)
 
 else:
     st.info("왼쪽에서 파일을 업로드하고 분석을 실행하세요. 또는 위 월 버튼을 클릭하면 저장된 기록을 볼 수 있습니다.")
