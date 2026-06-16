@@ -192,6 +192,7 @@ def render_bars(actual_data, target_data, date_label=""):
     items_html = ""
     total_actual = 0.0
     total_target = 0.0
+    under_count = 0
 
     for cat in CATEGORIES:
         actual = float(actual_data.get(cat, 0))
@@ -207,6 +208,7 @@ def render_bars(actual_data, target_data, date_label=""):
             color = '#E67E22'
         else:
             color = '#E74C3C'
+            under_count += 1
 
         over_tag = (
             '<span style="background:#27AE60;color:#fff;padding:1px 7px;'
@@ -257,11 +259,36 @@ def render_bars(actual_data, target_data, date_label=""):
     """
 
     subtitle = f'<p style="color:#7F8C8D;font-size:13px;margin:0 0 16px;">{date_label} 기준</p>' if date_label else ''
+    total_pct_val = total_actual / total_target * 100 if total_target else 0
+    under_color = '#E74C3C' if under_count > 0 else '#27AE60'
+    pct_color = '#27AE60' if total_pct_val >= 100 else '#E67E22' if total_pct_val >= 70 else '#E74C3C'
+
+    summary_html = f"""
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;">
+      <div style="background:#1E1E2E;border-radius:10px;padding:16px;">
+        <div style="font-size:12px;color:#95A5A6;margin-bottom:6px;">전체 달성률</div>
+        <div style="font-size:24px;font-weight:700;color:{pct_color};">{total_pct_val:.1f}%</div>
+      </div>
+      <div style="background:#1E1E2E;border-radius:10px;padding:16px;">
+        <div style="font-size:12px;color:#95A5A6;margin-bottom:6px;">실적 합계</div>
+        <div style="font-size:24px;font-weight:700;color:#ECF0F1;">{fmt_vnd(total_actual)}</div>
+      </div>
+      <div style="background:#1E1E2E;border-radius:10px;padding:16px;">
+        <div style="font-size:12px;color:#95A5A6;margin-bottom:6px;">목표 합계</div>
+        <div style="font-size:24px;font-weight:700;color:#ECF0F1;">{fmt_vnd(total_target)}</div>
+      </div>
+      <div style="background:#1E1E2E;border-radius:10px;padding:16px;">
+        <div style="font-size:12px;color:#95A5A6;margin-bottom:6px;">미달 카테고리</div>
+        <div style="font-size:24px;font-weight:700;color:{under_color};">{under_count}개</div>
+      </div>
+    </div>
+    """
 
     return f"""
     <div style="background:white;padding:24px;border-radius:14px;
                 box-shadow:0 2px 12px rgba(0,0,0,0.08);margin-top:8px;">
       {subtitle}
+      {summary_html}
       {items_html}
     </div>
     """
