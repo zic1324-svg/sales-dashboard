@@ -200,7 +200,7 @@ def render_bars(actual_data, target_data, date_label=""):
     total_pct = total_actual / total_target * 100 if total_target else 0
     under_count = sum(
         1 for c in CATEGORIES
-        if float(actual_data.get(c, 0)) / float(target_data.get(c, 1)) * 100 < 100
+        if round(float(actual_data.get(c, 0)) / float(target_data.get(c, 1)) * 100, 1) < 100.0
     )
 
     def bar_colors(pct):
