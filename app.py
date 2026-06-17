@@ -352,8 +352,8 @@ with st.sidebar:
             month_num = int(m_match.group(1)) if m_match else None
 
             if month_num:
-                default_date = f"{month_num}월 {datetime.now().day}일"
-                date_label = st.text_input("기준일 입력", value=default_date)
+                selected_date = st.date_input("기준일 선택", value=datetime.now())
+                date_label = f"{selected_date.month}월 {selected_date.day}일"
 
                 st.markdown("")
                 if st.button("📊 분석 실행", use_container_width=True, type="primary"):
