@@ -187,84 +187,112 @@ def fmt_vnd(val):
     return f"{val:,.0f}"
 
 
+# ─── 카테고리 아이콘 ───────────────────────────────────────────────────────────
+CAT_ICON = {
+    '젖병': '🍼', '젖꼭지': '🔵', '바디워시': '🧴',
+    '물티슈': '🧻', '젖병세정제': '🫧', '청소솔': '🪣', '기저귀': '👶'
+}
+
 # ─── 달성률 바 HTML ────────────────────────────────────────────────────────────
 def render_bars(actual_data, target_data, date_label=""):
-    items_html = ""
-    total_actual = 0.0
-    total_target = 0.0
+    total_actual = sum(float(actual_data.get(c, 0)) for c in CATEGORIES)
+    total_target = sum(float(target_data.get(c, 1)) for c in CATEGORIES)
+    total_pct = total_actual / total_target * 100 if total_target else 0
+    under_count = sum(
+        1 for c in CATEGORIES
+        if round(float(actual_data.get(c, 0)) / float(target_data.get(c, 1)) * 100, 1) < 100.0
+    )
 
+    def bar_colors(pct):
+        if pct >= 100: return '#10b981', 'linear-gradient(90deg,#059669,#10b981)', '#d1fae5', '#065f46'
+        if pct >= 70:  return '#f59e0b', 'linear-gradient(90deg,#d97706,#f59e0b)', '#fef3c7', '#92400e'
+        return '#ef4444', 'linear-gradient(90deg,#dc2626,#ef4444)', '#fee2e2', '#991b1b'
+
+    pct_card_color = '#10b981' if total_pct >= 100 else '#f59e0b' if total_pct >= 70 else '#ef4444'
+    under_card_color = '#10b981' if under_count == 0 else '#ef4444'
+
+    summary_html = f"""
+    <style>
+      .summary-grid {{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:24px; }}
+      @media(max-width:600px) {{ .summary-grid {{ grid-template-columns:repeat(2,1fr); }} }}
+      .s-card {{ background:#0f172a; border-radius:16px; padding:18px 16px; }}
+      .s-label {{ font-size:11px; font-weight:600; letter-spacing:.06em; color:#64748b; text-transform:uppercase; margin-bottom:8px; }}
+      .s-value {{ font-size:26px; font-weight:700; letter-spacing:-.5px; }}
+    </style>
+    <div class="summary-grid">
+      <div class="s-card"><div class="s-label">전체 달성률</div><div class="s-value" style="color:{pct_card_color};">{total_pct:.1f}%</div></div>
+      <div class="s-card"><div class="s-label">실적 합계</div><div class="s-value" style="color:#f1f5f9;">{fmt_vnd(total_actual)}</div></div>
+      <div class="s-card"><div class="s-label">목표 합계</div><div class="s-value" style="color:#f1f5f9;">{fmt_vnd(total_target)}</div></div>
+      <div class="s-card"><div class="s-label">미달 카테고리</div><div class="s-value" style="color:{under_card_color};">{under_count}개</div></div>
+    </div>
+    """
+
+    items_html = ""
     for cat in CATEGORIES:
         actual = float(actual_data.get(cat, 0))
         target = float(target_data.get(cat, 1))
         pct = actual / target * 100 if target else 0
         bar_w = min(pct, 100)
-        total_actual += actual
-        total_target += target
+        solid, grad, bg_badge, text_badge = bar_colors(pct)
+        icon = CAT_ICON.get(cat, '')
 
-        if pct >= 100:
-            color = '#27AE60'
-        elif pct >= 70:
-            color = '#E67E22'
-        else:
-            color = '#E74C3C'
-
-        over_tag = (
-            '<span style="background:#27AE60;color:#fff;padding:1px 7px;'
-            'border-radius:10px;font-size:11px;margin-left:6px;">OVER</span>'
-            if pct > 100 else ''
-        )
+        over_badge = f'<span style="background:#d1fae5;color:#065f46;font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;margin-left:8px;letter-spacing:.04em;">OVER</span>' if pct > 100 else ''
 
         items_html += f"""
-        <div style="margin-bottom:18px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
-            <span style="font-weight:600;font-size:15px;color:#2C3E50;">{cat}</span>
-            <span style="font-weight:700;font-size:16px;color:{color};">{pct:.1f}%{over_tag}</span>
+        <div style="margin-bottom:20px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:16px;">{icon}</span>
+              <span style="font-weight:600;font-size:14px;color:#1e293b;letter-spacing:-.2px;">{cat}</span>
+              {over_badge}
+            </div>
+            <span style="font-weight:700;font-size:15px;color:{solid};">{pct:.1f}%</span>
           </div>
-          <div style="background:#ECF0F1;border-radius:10px;height:28px;overflow:hidden;">
-            <div style="width:{bar_w:.1f}%;background:{color};height:100%;border-radius:10px;
-                        display:flex;align-items:center;padding-left:8px;box-sizing:border-box;">
-              {'<span style="color:white;font-size:12px;font-weight:600;">'+fmt_vnd(actual)+'</span>' if bar_w > 15 else ''}
+          <div style="background:#f1f5f9;border-radius:99px;height:10px;overflow:visible;position:relative;">
+            <div style="width:{bar_w:.1f}%;background:{grad};height:100%;border-radius:99px;position:relative;">
+              <div style="position:absolute;right:-1px;top:50%;transform:translateY(-50%);width:16px;height:16px;background:{solid};border-radius:50%;border:2px solid white;box-shadow:0 0 0 2px {solid}33;"></div>
             </div>
           </div>
-          <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:12px;color:#95A5A6;">
-            <span>실적: {fmt_vnd(actual)} VND</span>
-            <span>목표: {fmt_vnd(target)} VND</span>
+          <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:12px;color:#94a3b8;">
+            <span>실적 <strong style="color:#475569;">{fmt_vnd(actual)}</strong></span>
+            <span>목표 <strong style="color:#475569;">{fmt_vnd(target)}</strong></span>
           </div>
         </div>
         """
 
-    total_pct = total_actual / total_target * 100 if total_target else 0
+    total_solid, total_grad, _, _ = bar_colors(total_pct)
     total_bar_w = min(total_pct, 100)
-    total_color = '#27AE60' if total_pct >= 100 else '#E67E22' if total_pct >= 70 else '#E74C3C'
-
     items_html += f"""
-    <div style="margin-top:10px;padding-top:14px;border-top:2px solid #ECF0F1;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <span style="font-weight:700;font-size:17px;color:#2C3E50;">전체 합계</span>
-        <span style="font-weight:800;font-size:20px;color:{total_color};">{total_pct:.1f}%</span>
+    <div style="margin-top:8px;padding-top:20px;border-top:1px solid #e2e8f0;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-weight:700;font-size:15px;color:#1e293b;">전체 합계</span>
+        <span style="font-weight:700;font-size:16px;color:{total_solid};">{total_pct:.1f}%</span>
       </div>
-      <div style="background:#ECF0F1;border-radius:10px;height:36px;overflow:hidden;">
-        <div style="width:{total_bar_w:.1f}%;background:{total_color};height:100%;border-radius:10px;
-                    display:flex;align-items:center;padding-left:10px;box-sizing:border-box;">
-          {'<span style="color:white;font-size:13px;font-weight:700;">'+fmt_vnd(total_actual)+'</span>' if total_bar_w > 10 else ''}
+      <div style="background:#f1f5f9;border-radius:99px;height:14px;overflow:visible;position:relative;">
+        <div style="width:{total_bar_w:.1f}%;background:{total_grad};height:100%;border-radius:99px;position:relative;">
+          <div style="position:absolute;right:-1px;top:50%;transform:translateY(-50%);width:20px;height:20px;background:{total_solid};border-radius:50%;border:2px solid white;box-shadow:0 0 0 3px {total_solid}33;"></div>
         </div>
       </div>
-      <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:12px;color:#95A5A6;">
-        <span>실적: {fmt_vnd(total_actual)} VND</span>
-        <span>목표: {fmt_vnd(total_target)} VND</span>
+      <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:12px;color:#94a3b8;">
+        <span>실적 <strong style="color:#475569;">{fmt_vnd(total_actual)}</strong></span>
+        <span>목표 <strong style="color:#475569;">{fmt_vnd(total_target)}</strong></span>
       </div>
     </div>
     """
 
-    subtitle = f'<p style="color:#7F8C8D;font-size:13px;margin:0 0 16px;">{date_label} 기준</p>' if date_label else ''
+    date_tag = f'<p style="font-size:12px;color:#94a3b8;margin:0 0 20px;letter-spacing:.02em;">{date_label} 기준</p>' if date_label else ''
 
     return f"""
-    <div style="background:white;padding:24px;border-radius:14px;
-                box-shadow:0 2px 12px rgba(0,0,0,0.08);margin-top:8px;">
-      {subtitle}
-      {items_html}
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <div style="font-family:'Inter',sans-serif;background:#f8fafc;padding:20px;border-radius:16px;min-height:100px;">
+      {date_tag}
+      {summary_html}
+      <div style="background:white;border-radius:16px;padding:24px;border:1px solid #e2e8f0;">
+        {items_html}
+      </div>
     </div>
     """
+
 
 
 # ─── 앱 레이아웃 ───────────────────────────────────────────────────────────────
@@ -272,21 +300,34 @@ st.set_page_config(page_title="2026 매출 대시보드", layout="wide", page_ic
 
 st.markdown("""
 <style>
-  .stApp { background: #F0F2F5; }
-  section[data-testid="stSidebar"] { background: #2C3E50; }
-  section[data-testid="stSidebar"] * { color: #ECF0F1 !important; }
-  section[data-testid="stSidebar"] .stFileUploader label { color: #BDC3C7 !important; }
   .block-container { padding-top: 1.5rem; }
 </style>
 """, unsafe_allow_html=True)
+
+# ── 권한 확인 ─────────────────────────────────────────────────────────────────
+if not st.session_state.get('role'):
+    st.session_state['role'] = 'viewer'
+
+is_admin = st.session_state.get('role') == 'admin'
 
 st.title("📊 2026년 온라인 매출 달성 현황")
 
 # ── 사이드바 ──────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown("## 📂 데이터 업로드")
-    st.markdown("---")
-    uploaded = st.file_uploader("SKU 매출 엑셀 파일 (.xlsx)", type=['xlsx'], label_visibility='collapsed')
+    if is_admin:
+        st.markdown("## 📂 데이터 업로드")
+        st.markdown("---")
+    else:
+        with st.expander("🔑 관리자 로그인"):
+            apwd = st.text_input("관리자 비밀번호", type="password", key="admin_pw_input")
+            if st.button("로그인", key="admin_login_btn"):
+                if apwd == st.secrets.get("ADMIN_PASSWORD", ""):
+                    st.session_state['role'] = 'admin'
+                    st.rerun()
+                else:
+                    st.error("비밀번호가 틀렸습니다.")
+        st.markdown("---")
+    uploaded = st.file_uploader("SKU 매출 엑셀 파일 (.xlsx)", type=['xlsx'], label_visibility='collapsed') if is_admin else None
 
     if uploaded:
         file_bytes = uploaded.read()
@@ -303,8 +344,8 @@ with st.sidebar:
             month_num = int(m_match.group(1)) if m_match else None
 
             if month_num:
-                default_date = f"{month_num}월 {datetime.now().day}일"
-                date_label = st.text_input("기준일 입력", value=default_date)
+                selected_date = st.date_input("기준일 선택", value=datetime.now())
+                date_label = f"{selected_date.month}월 {selected_date.day}일"
 
                 st.markdown("")
                 if st.button("📊 분석 실행", use_container_width=True, type="primary"):
@@ -360,14 +401,14 @@ if view_month and view_month in history:
     rec = history[view_month]
     st.subheader(f"📈 {view_month}월 달성 현황")
     html = render_bars(rec['actual'], rec['target'], rec.get('date_label', ''))
-    components.html(html, height=720, scrolling=False)
+    components.html(html, height=1000, scrolling=False)
 
 elif result:
     month = result['month']
     target = ANNUAL_TARGETS[month]
     st.subheader(f"📈 {month}월 달성 현황")
     html = render_bars(result['actual'], target, result['date_label'])
-    components.html(html, height=720, scrolling=False)
+    components.html(html, height=1000, scrolling=False)
 
 else:
     st.info("왼쪽에서 파일을 업로드하고 분석을 실행하세요. 또는 위 월 버튼을 클릭하면 저장된 기록을 볼 수 있습니다.")
