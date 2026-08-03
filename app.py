@@ -403,6 +403,15 @@ if view_month and view_month in history:
     html = render_bars(rec['actual'], rec['target'], rec.get('date_label', ''))
     components.html(html, height=1000, scrolling=False)
 
+elif view_month:
+    # 데이터 없는 달 — 목표치만 표시
+    target = ANNUAL_TARGETS.get(view_month, {})
+    empty_actual = {c: 0 for c in CATEGORIES}
+    st.subheader(f"📈 {view_month}월 목표 현황")
+    st.caption("아직 실적 데이터가 없습니다. 목표치만 표시합니다.")
+    html = render_bars(empty_actual, target, "")
+    components.html(html, height=1000, scrolling=False)
+
 elif result:
     month = result['month']
     target = ANNUAL_TARGETS[month]
