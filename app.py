@@ -327,47 +327,40 @@ with st.sidebar:
                 else:
                     st.error("비밀번호가 틀렸습니다.")
         st.markdown("---")
-    uploaded = st.file_uploader("SKU 매출 엑셀 파일 (.xlsx)", type=['xlsx'], label_visibility='collapsed') if is_admin else None
+    uploaded = st.file_uploader("월별 매출 Excel 파일 (.xlsx)", type=['xlsx'], label_visibility='collapsed') if is_admin else None
 
     if uploaded:
         file_bytes = uploaded.read()
         wb = openpyxl.load_workbook(io.BytesIO(file_bytes), data_only=True)
         sheets = wb.sheetnames
-
         thang_sheets = [s for s in sheets if re.search(r'th[aá]ng', s, re.IGNORECASE)]
 
         if not thang_sheets:
             st.error("THÁNG XX 시트를 찾을 수 없습니다.")
         else:
-            selected_sheet = st.selectbox("조회할 시트", thang_sheets)
+            # 시트가 여러 개면 선택, 하나면 자동
+            if len(thang_sheets) > 1:
+                selected_sheet = st.selectbox("시트 선택", thang_sheets)
+            else:
+                selected_sheet = thang_sheets[0]
+                st.caption(f"📄 시트: {selected_sheet}")
+
             m_match = re.search(r'(\d+)', selected_sheet)
             month_num = int(m_match.group(1)) if m_match else None
 
             if month_num:
-                selected_date = st.date_input("기준일 선택", value=datetime.now())
-                date_label = f"{selected_date.month}월 {selected_date.day}일"
-
-                st.markdown("")
-                if st.button("📊 분석 실행", use_container_width=True, type="primary"):
-                    ws = wb[selected_sheet]
-                    actual = parse_sheet(ws)
-                    if not actual or all(v == 0 for v in actual.values()):
-                        st.error("데이터를 읽지 못했습니다. 시트 구조를 확인해 주세요.")
-                    else:
-                        st.session_state['result'] = {
-                            'month': month_num,
-                            'date_label': date_label,
-                            'actual': actual,
-                        }
-                        st.session_state['view_month'] = None
-                        st.success(f"✅ {month_num}월 분석 완료!")
-
-                if 'result' in st.session_state and st.session_state['result']['month'] == month_num:
-                    st.markdown("")
-                    if st.button("💾 이달 기록 저장", use_container_width=True):
-                        r = st.session_state['result']
-                        save_record(r['month'], r['date_label'], r['actual'])
-                        st.success("저장 완료!")
+                ws = wb[selected_sheet]
+                actual = parse_sheet(ws)
+                if not actual or all(v == 0 for v in actual.values()):
+                    st.error("데이터를 읽지 못했습니다. 시트 구조를 확인해 주세요.")
+                else:
+                    today = datetime.now()
+                    date_label = f"{today.month}월 {today.day}일"
+                    total = sum(actual.values())
+                    st.success(f"✅ {month_num}월 데이터 인식 완료 — 합계 {total/1e9:.2f} tỷ")
+                    if st.button("💾 저장", use_container_width=True, type="primary"):
+                        save_record(month_num, date_label, actual)
+                        st.success(f"{month_num}월 기록 저장 완료!")
                         st.rerun()
 
     st.markdown("---")
