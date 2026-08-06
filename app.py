@@ -296,7 +296,7 @@ def render_bars(actual_data, target_data, date_label=""):
 
 
 # ─── 앱 레이아웃 ───────────────────────────────────────────────────────────────
-st.set_page_config(page_title="2026 매출 대시보드", layout="wide", page_icon="📊")
+st.set_page_config(page_title="온라인 달성률", layout="wide", page_icon="📊")
 
 st.markdown("""
 <style>
