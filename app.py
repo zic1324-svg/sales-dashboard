@@ -315,7 +315,7 @@ st.title("📊 2026년 온라인 매출 달성 현황")
 # ── 사이드바 ──────────────────────────────────────────────────────────────────
 with st.sidebar:
     if is_admin:
-        st.markdown("## 📂 데이터 업로드")
+        st.markdown("## 📗 Excel 업로드")
         st.markdown("---")
     else:
         with st.expander("🔑 관리자 로그인"):
@@ -327,7 +327,7 @@ with st.sidebar:
                 else:
                     st.error("비밀번호가 틀렸습니다.")
         st.markdown("---")
-    uploaded = st.file_uploader("월별 매출 Excel 파일 (.xlsx)", type=['xlsx'], label_visibility='collapsed') if is_admin else None
+    uploaded = st.file_uploader("📗 Excel 업로드", type=['xlsx'], label_visibility='visible') if is_admin else None
 
     if uploaded:
         file_bytes = uploaded.read()
