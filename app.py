@@ -393,7 +393,7 @@ result = st.session_state.get('result')
 if view_month and view_month in history:
     rec = history[view_month]
     st.subheader(f"📈 {view_month}월 달성 현황")
-    html = render_bars(rec['actual'], rec['target'], rec.get('date_label', ''))
+    html = render_bars(rec['actual'], ANNUAL_TARGETS.get(view_month, rec['target']), rec.get('date_label', ''))
     components.html(html, height=1000, scrolling=False)
 
 elif view_month:
